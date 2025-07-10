@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Reptile Cursor</title>
+  <style>
+    html, body {
+      margin: 0;
+      overflow: hidden;
+      background: #111;
+      cursor: none; /* Hide system cursor */
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let w = window.innerWidth;
+let h = window.innerHeight;
+canvas.width = w;
+canvas.height = h;
+
+window.addEventListener('resize', () => {
+  w = window.innerWidth;
+  h = window.innerHeight;
+  canvas.width = w;
+  canvas.height = h;
+});
+
+const SEGMENT_COUNT = 25;
+const STIFFNESS = 0.2;
+let mouse = { x: w / 2, y: h / 2 };
+let clicks = [];
+
+document.addEventListener('mousemove', e => {
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
+});
+
+document.addEventListener('click', e => {
+  clicks.push({ x: e.clientX, y: e.clientY, r: 0 });
+});
+
+class Segment {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  follow(tx, ty) {
+    const dx = tx - this.x;
+    const dy = ty - this.y;
+    this.x += dx * STIFFNESS;
+    this.y += dy * STIFFNESS;
+  }
+
+  draw(ctx, prev, i) {
+    const gradient = ctx.createLinearGradient(prev.x, prev.y, this.x, this.y);
+    gradient.addColorStop(0, `hsl(${i * 10}, 100%, 60%)`);
+    gradient.addColorStop(1, `hsl(${i * 10 + 30}, 100%, 50%)`);
+
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 8 - i * 0.2;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(prev.x, prev.y);
+    ctx.lineTo(this.x, this.y);
+    ctx.stroke();
+  }
+}
+
+const segments = [];
+for (let i = 0; i < SEGMENT_COUNT; i++) {
+  segments.push(new Segment(mouse.x, mouse.y));
+}
+
+function drawEyes(x, y) {
+  const dx = mouse.x - x;
+  const dy = mouse.y - y;
+  const angle = Math.atan2(dy, dx);
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+
+  // Eyes
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.arc(-10, -10, 6, 0, Math.PI * 2);
+  ctx.arc(-10, 10, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Pupils
+  ctx.fillStyle = "#00ff88";
+  ctx.beginPath();
+  ctx.arc(-10 + Math.cos(angle) * 2, -10 + Math.sin(angle) * 2, 2, 0, Math.PI * 2);
+  ctx.arc(-10 + Math.cos(angle) * 2, 10 + Math.sin(angle) * 2, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawClickRipples() {
+  clicks.forEach((click, index) => {
+    click.r += 2;
+    if (click.r > 50) {
+      clicks.splice(index, 1);
+      return;
+    }
+    ctx.beginPath();
+    ctx.arc(click.x, click.y, click.r, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(0, 255, 136, ${1 - click.r / 50})`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+}
+
+function animate() {
+  ctx.clearRect(0, 0, w, h);
+
+  // Update reptile body
+  segments[0].follow(mouse.x, mouse.y);
+  for (let i = 1; i < segments.length; i++) {
+    segments[i].follow(segments[i - 1].x, segments[i - 1].y);
+  }
+
+  // Draw tail
+  for (let i = segments.length - 1; i > 0; i--) {
+    segments[i].draw(ctx, segments[i - 1], i);
+  }
+
+  // Eyes on the head
+  drawEyes(segments[0].x, segments[0].y);
+
+  // Click ripples
+  drawClickRipples();
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>

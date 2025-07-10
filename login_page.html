@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login with Registration Check</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1e1e1e;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    input {
+      padding: 10px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      border: none;
+      background: #00cc88;
+      color: #fff;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      position: relative;
+    }
+    #loginBtn {
+      position: absolute;
+    }
+    .container {
+      text-align: center;
+      position: relative;
+    }
+    .status {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #ff8080;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Login Page</h2>
+    <input type="text" id="username" placeholder="Username"><br>
+    <input type="password" id="password" placeholder="Password"><br>
+
+    <button id="registerBtn">Register</button>
+    <button id="loginBtn">Login</button>
+
+    <div class="status" id="statusMsg"></div>
+  </div>
+
+  <script>
+    const registerBtn = document.getElementById('registerBtn');
+    const loginBtn = document.getElementById('loginBtn');
+    const statusMsg = document.getElementById('statusMsg');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+
+    let isRegistered = false;
+    let registeredUser = '';
+    let registeredPass = '';
+
+    // Registration
+    registerBtn.addEventListener('click', () => {
+      const user = usernameInput.value.trim();
+      const pass = passwordInput.value.trim();
+
+      if (!user || !pass) {
+        statusMsg.textContent = "Please fill both fields to register.";
+        return;
+      }
+
+      registeredUser = user;
+      registeredPass = pass;
+      isRegistered = true;
+      statusMsg.style.color = "#00ff88";
+      statusMsg.textContent = "Registration successful! Now you can login.";
+    });
+
+    // Login
+    loginBtn.addEventListener('click', () => {
+      if (!isRegistered) return; // Don't login if not registered
+
+      const user = usernameInput.value.trim();
+      const pass = passwordInput.value.trim();
+
+      if (user === registeredUser && pass === registeredPass) {
+        statusMsg.style.color = "#00ff88";
+        statusMsg.textContent = "Login successful! 🎉";
+      } else {
+        statusMsg.style.color = "#ff4d4d";
+        statusMsg.textContent = "Incorrect username or password.";
+      }
+    });
+
+    // Button Avoids You if Not Registered
+    document.addEventListener('mousemove', (e) => {
+      const rect = loginBtn.getBoundingClientRect();
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+      const threshold = 80;
+
+      if (!isRegistered) {
+        const dx = mouseX - (rect.left + rect.width / 2);
+        const dy = mouseY - (rect.top + rect.height / 2);
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < threshold) {
+          // Move the button to a random place on screen
+          const newX = Math.random() * (window.innerWidth - 100);
+          const newY = Math.random() * (window.innerHeight - 50);
+          loginBtn.style.left = `${newX}px`;
+          loginBtn.style.top = `${newY}px`;
+        }
+      }
+    });
+  </script>
+</body>
+</html>
